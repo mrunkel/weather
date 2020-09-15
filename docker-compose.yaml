@@ -1,0 +1,30 @@
+version: "3.7"
+services:
+  php:
+    build:
+      dockerfile: docker/Dockerfile
+      context: .
+      target: dev
+    hostname: schufa
+    volumes:
+      - .:/var/www:delegated
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    command: ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.weather.rule=Host(`temp.runkel.org`)
+      - traefik.http.services.weather.loadbalancer.server.port=80
+      - traefik.http.routers.weather.entrypoints=websecure
+      - traefik.http.routers.weather.tls.certresolver=default
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 'true'
+    networks:
+      - web
+      - internal
+
+networks:
+  web:
+    external: true
+  internal:
+    external: true
